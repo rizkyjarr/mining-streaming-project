@@ -24,7 +24,7 @@ def simulate_unit(unit_name, conn_str):
     try:
         client = IoTHubDeviceClient.create_from_connection_string(conn_str)
         client.connect()
-        print(f"[{unit_name}] connected")
+        print(f"[{unit_name}] Connected")
 
         while not shutdown_event.is_set():
             data = {
@@ -37,30 +37,34 @@ def simulate_unit(unit_name, conn_str):
             message = Message(json.dumps(data))
             client.send_message(message)
             print(f"[{unit_name}] Sent: {data}")
-            time.sleep(5)
+            time.sleep(20)
 
     except Exception as e:
         print(f"[{unit_name}] Error: {e}")
     finally:
         try:
             client.shutdown()
-            print(f"[{unit_name}] disconnected")
+            print(f"[{unit_name}] Disconnected")
         except:
             pass
 
-# Handle Ctrl+C
+# Handle Ctrl+C to trigger shutdown_event
 def handle_sigint(signum, frame):
-    print("\n🛑 Received stop signal. Shutting down...")
+    print("\n🛑 Ctrl+C received! Stopping all units...")
     shutdown_event.set()
 
+# Bind signal
 signal.signal(signal.SIGINT, handle_sigint)
 
-# Start threads for each unit
+# Start each unit's simulation in a thread
 threads = []
 for unit, conn_str in DEVICE_CONNECTION_STRINGS.items():
-    t = threading.Thread(target=simulate_unit, args=(unit, conn_str))
-    t.start()
-    threads.append(t)
+    if conn_str:
+        t = threading.Thread(target=simulate_unit, args=(unit, conn_str))
+        t.start()
+        threads.append(t)
+    else:
+        print(f"[{unit}] Skipped: Connection string not set in .env")
 
 # Wait for all threads to finish
 for t in threads:
