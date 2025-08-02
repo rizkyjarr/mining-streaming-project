@@ -6,9 +6,17 @@ import signal
 from azure.iot.device import IoTHubDeviceClient, Message
 from dotenv import load_dotenv
 import os
+from datetime import datetime
+import pytz
+
+
 
 # Load env
 load_dotenv()
+
+# Setting up GMT+7 Jakarta timestamp
+jakarta_tz = pytz.timezone("Asia/Jakarta")
+now_jakarta = datetime.now(jakarta_tz)
 
 # Replace with your actual device connection strings
 DEVICE_CONNECTION_STRINGS = {
@@ -32,7 +40,7 @@ def simulate_unit(unit_name, conn_str):
                 "temperature": round(random.uniform(25, 35), 2),
                 "humidity": round(random.uniform(30, 60), 2),
                 "vibration": round(random.uniform(0.1, 1.0), 3),
-                "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+                "timestamp": now_jakarta.strftime('%Y-%m-%d %H:%M:%S')
             }
             message = Message(json.dumps(data))
             client.send_message(message)
