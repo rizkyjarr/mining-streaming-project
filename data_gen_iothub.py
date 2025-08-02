@@ -9,14 +9,8 @@ import os
 from datetime import datetime
 import pytz
 
-
-
 # Load env
 load_dotenv()
-
-# Setting up GMT+7 Jakarta timestamp
-jakarta_tz = pytz.timezone("Asia/Jakarta")
-now_jakarta = datetime.now(jakarta_tz)
 
 # Replace with your actual device connection strings
 DEVICE_CONNECTION_STRINGS = {
@@ -27,6 +21,11 @@ DEVICE_CONNECTION_STRINGS = {
 
 # Shared shutdown flag
 shutdown_event = threading.Event()
+
+def get_jakarta_timestamp():
+    jakarta_tz = pytz.timezone('Asia/Jakarta')
+    now = datetime.now(jakarta_tz)
+    return now.strftime('%Y-%m-%d %H:%M:%S')
 
 def simulate_unit(unit_name, conn_str):
     try:
@@ -40,7 +39,7 @@ def simulate_unit(unit_name, conn_str):
                 "temperature": round(random.uniform(25, 35), 2),
                 "humidity": round(random.uniform(30, 60), 2),
                 "vibration": round(random.uniform(0.1, 1.0), 3),
-                "timestamp": now_jakarta.strftime('%Y-%m-%d %H:%M:%S')
+                "timestamp": get_jakarta_timestamp()
             }
             message = Message(json.dumps(data))
             client.send_message(message)
