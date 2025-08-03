@@ -9,24 +9,42 @@ import os
 from datetime import datetime
 import pytz
 
-# Load env
+# Load environment variables
 load_dotenv()
 
-# Replace with your actual device connection strings
+# Device connection strings from .env
 DEVICE_CONNECTION_STRINGS = {
     "HD785-7-001": os.getenv("DEVICE_HD785_7_001"),
     "HD785-7-002": os.getenv("DEVICE_HD785_7_002"),
     "HD785-7-003": os.getenv("DEVICE_HD785_7_003")
 }
 
-# Shared shutdown flag
+# Shutdown flag for Ctrl+C
 shutdown_event = threading.Event()
 
+# Get Jakarta time
 def get_jakarta_timestamp():
     jakarta_tz = pytz.timezone('Asia/Jakarta')
     now = datetime.now(jakarta_tz)
     return now.strftime('%Y-%m-%d %H:%M:%S')
 
+# Generate telemetry as you wanted
+def generate_fake_telemetry(unit_id):
+    data = {
+        "unit_id": unit_id,
+        "timestamp": get_jakarta_timestamp(),
+        "engine_temperature": round(random.uniform(75, 100), 1),
+        "vibration_level": round(random.uniform(2.0, 10.0), 2),
+        "fuel_level": round(random.uniform(20, 100), 1),
+        "oil_pressure": round(random.uniform(30, 60), 1),
+        "brake_temperature": round(random.uniform(180, 280), 1),
+        "rpm": random.randint(900, 1800),
+        "latitude": -1.23456 + random.uniform(-0.01, 0.01),
+        "longitude": 117.12345 + random.uniform(-0.01, 0.01)        
+    }
+    return data
+
+# Simulate telemetry sending per unit
 def simulate_unit(unit_name, conn_str):
     try:
         client = IoTHubDeviceClient.create_from_connection_string(conn_str)
@@ -34,13 +52,7 @@ def simulate_unit(unit_name, conn_str):
         print(f"[{unit_name}] Connected")
 
         while not shutdown_event.is_set():
-            data = {
-                "unit_id": unit_name,
-                "temperature": round(random.uniform(25, 35), 2),
-                "humidity": round(random.uniform(30, 60), 2),
-                "vibration": round(random.uniform(0.1, 1.0), 3),
-                "timestamp": get_jakarta_timestamp()
-            }
+            data = generate_fake_telemetry(unit_name)
             message = Message(json.dumps(data))
             client.send_message(message)
             print(f"[{unit_name}] Sent: {data}")
@@ -55,15 +67,14 @@ def simulate_unit(unit_name, conn_str):
         except:
             pass
 
-# Handle Ctrl+C to trigger shutdown_event
+# Ctrl+C handling
 def handle_sigint(signum, frame):
     print("\n🛑 Ctrl+C received! Stopping all units...")
     shutdown_event.set()
 
-# Bind signal
 signal.signal(signal.SIGINT, handle_sigint)
 
-# Start each unit's simulation in a thread
+# Launch simulation threads
 threads = []
 for unit, conn_str in DEVICE_CONNECTION_STRINGS.items():
     if conn_str:
