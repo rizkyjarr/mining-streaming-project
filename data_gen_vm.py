@@ -56,7 +56,7 @@ def simulate_unit(unit_name, conn_str):
             message = Message(json.dumps(data))
             client.send_message(message)
             print(f"[{unit_name}] Sent: {data}")
-            time.sleep(20)
+            time.sleep(60)
 
     except Exception as e:
         print(f"[{unit_name}] Error: {e}")
